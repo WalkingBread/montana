@@ -35,35 +35,32 @@ public class SemanticAnalyzer {
     public void visit(AST node) {
         String className = node.getClass().getSimpleName();
 
-        for (Method m : SemanticAnalyzer.class.getDeclaredMethods()) {
-            if(m.getName().contains(className)) {
-                try {
-                    m.invoke(this, node);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } 
-            }
+        try {
+            Method method = getClass().getMethod("visit" + className, node.getClass());
+            method.invoke(this, node);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
     
-    private void visitBinaryOperator(BinaryOperator op) {
+    public void visitBinaryOperator(BinaryOperator op) {
         visit(op.left);
         visit(op.right);
     }
     
-    private void visitUnaryOperator(UnaryOperator op) {
+    public void visitUnaryOperator(UnaryOperator op) {
         visit(op.expr);
     }
     
-    private void visitValue(Value val) {}
+    public void visitValue(Value val) {}
     
-    private void visitCompare(Compare c) {
+    public void visitCompare(Compare c) {
         for(AST node : c.comparables) {
             visit(node);
         }
     }
     
-    private void visitCompound(Compound comp) {
+    public void visitCompound(Compound comp) {
         if(currentScope == null) {
             currentScope = new SymbolTable(1, null);
         }
@@ -73,12 +70,12 @@ public class SemanticAnalyzer {
         }
     }
     
-    private void visitAssign(Assign assign) {
+    public void visitAssign(Assign assign) {
         visit(assign.left);
         visit(assign.right);
     }
     
-    private void visitVariable(Variable var) {
+    public void visitVariable(Variable var) {
         String varName = var.variable.value;
         Symbol varSymbol = currentScope.lookup(varName, false);
     
@@ -87,18 +84,18 @@ public class SemanticAnalyzer {
         }
     }
     
-    private void visitNoOperator(NoOperator noOp) {}
+    public void visitNoOperator(NoOperator noOp) {}
     
-    private void visitDoubleCondition(DoubleCondition cond) {
+    public void visitDoubleCondition(DoubleCondition cond) {
         visit(cond.left);
         visit(cond.right);
     }
     
-    private void visitNegation(Negation neg) {
+    public void visitNegation(Negation neg) {
         visit(neg.statement);
     }
     
-    private void visitVariableDeclaration(VariableDeclaration decl) {
+    public void visitVariableDeclaration(VariableDeclaration decl) {
         for(Variable var : decl.variables) {
             String name = var.variable.value;
     
@@ -112,7 +109,7 @@ public class SemanticAnalyzer {
         }
     }
     
-    private void visitIfCondition(IfCondition cond) {
+    public void visitIfCondition(IfCondition cond) {
         visit(cond.condition);
     
         enterNewScope();
@@ -120,22 +117,22 @@ public class SemanticAnalyzer {
         leaveScope();
     }
     
-    private void visitPrint(Print print) {
+    public void visitPrint(Print print) {
         visit(print.printable);
     }
     
-    private void visitArrayInit(ArrayInit arrayInit) {
+    public void visitArrayInit(ArrayInit arrayInit) {
         for(AST node : arrayInit.elements) {
             visit(node);
         }
     }
     
-    private void visitArrayAccess(ArrayAccess access) {
+    public void visitArrayAccess(ArrayAccess access) {
         visit(access.array);
         visit(access.index);
     }
     
-    private void visitFunctionInit(FunctionInit functionInit) {
+    public void visitFunctionInit(FunctionInit functionInit) {
         Symbol func_symbol = new Symbol(functionInit.functionName);
         currentScope.define(func_symbol);
     
@@ -147,18 +144,18 @@ public class SemanticAnalyzer {
         leaveScope();
     }
     
-    private void visitFunctionCall(FunctionCall funcCall) {
+    public void visitFunctionCall(FunctionCall funcCall) {
         visit(funcCall.function);
         for(AST param : funcCall.params) {
             visit(param);
         }
     }
     
-    private void visitReturn(Return ret) {
+    public void visitReturn(Return ret) {
         visit(ret.returnable);
     }
     
-    private void visitWhileLoop(WhileLoop whileLoop) {
+    public void visitWhileLoop(WhileLoop whileLoop) {
         visit(whileLoop.condition);
     
         enterNewScope();
@@ -166,16 +163,16 @@ public class SemanticAnalyzer {
         leaveScope();
     }
     
-    private void visitCastValue(CastValue cast) {
+    public void visitCastValue(CastValue cast) {
         visit(cast.value);
     }
     
-    private void visitImport(Import im) {
+    public void visitImport(Import im) {
         Symbol importName = new Symbol(im.name);
         currentScope.define(importName);
     }
     
-    private void visitObjectDive(ObjectDive dive) {
+    public void visitObjectDive(ObjectDive dive) {
         visit(dive.parent);
         visit(dive.child);
     }

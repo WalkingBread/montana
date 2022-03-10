@@ -53,19 +53,17 @@ public class Interpreter {
     public MemoryValue visit(AST node) {
         String className = node.getClass().getSimpleName();
 
-        for (Method m : Interpreter.class.getDeclaredMethods()) {
-            if(m.getName().contains(className)) {
-                try {
-                    return (MemoryValue) m.invoke(this, node);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } 
-            }
+        try {
+            Method method = getClass().getMethod("visit" + className, node.getClass());
+            return (MemoryValue) method.invoke(this, node);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         return null;
     }
 
-    private MemoryValue visitBinaryOperator(BinaryOperator op) {
+    public MemoryValue visitBinaryOperator(BinaryOperator op) {
         Singular left = (Singular) visit(op.left);
         Singular right = (Singular) visit(op.right);
     
@@ -150,7 +148,7 @@ public class Interpreter {
         return null;
     }
 
-    private Singular visitUnaryOperator(UnaryOperator op) {
+    public Singular visitUnaryOperator(UnaryOperator op) {
         Singular expr = (Singular) visit(op.expr);
 
         if(op.op.typeOf(TokenType.MINUS)) {
@@ -167,7 +165,7 @@ public class Interpreter {
         
     }
 
-    private Singular visitValue(Value val) {
+    public Singular visitValue(Value val) {
         Type type = null;
 
         if(val.token.typeOf(TokenType.FLOAT)) {
@@ -187,7 +185,7 @@ public class Interpreter {
         
     }
 
-    private Singular visitCompare(Compare c) {
+    public Singular visitCompare(Compare c) {
         for(int i = 0; i < c.operators.size(); i++) {
             Token op = c.operators.get(i);
             AST left = c.comparables.get(i);
@@ -271,7 +269,7 @@ public class Interpreter {
         
     }
 
-    private MemoryValue visitCompound(Compound comp) {
+    public MemoryValue visitCompound(Compound comp) {
         if(memory.memoryLevel == 0) {
             enterNewMemory();
         }
@@ -306,7 +304,7 @@ public class Interpreter {
         
     }
 
-    private void visitAssign(Assign assign) {
+    public void visitAssign(Assign assign) {
         AST left = assign.left;
 
         if(left instanceof Variable) {
@@ -328,7 +326,7 @@ public class Interpreter {
         }
     }
 
-    private MemoryValue visitVariable(Variable var) {
+    public MemoryValue visitVariable(Variable var) {
         MemoryValue val = memory.get(var.token.value, false);
 
         if(val == null) {
@@ -338,9 +336,9 @@ public class Interpreter {
         return val;
     }
 
-    private void visitNoOperator(NoOperator noOp) {}
+    public void visitNoOperator(NoOperator noOp) {}
 
-    private Singular visitDoubleCondition(DoubleCondition cond) {
+    public Singular visitDoubleCondition(DoubleCondition cond) {
         String leftValue = ((Singular) visit(cond.left)).value;
         String rightValue = ((Singular) visit(cond.right)).value;
     
@@ -362,7 +360,7 @@ public class Interpreter {
         return null;
     }
 
-    private Singular visitNegation(Negation neg) {
+    public Singular visitNegation(Negation neg) {
         Singular value = (Singular) visit(neg.statement);
 
         if(value.type != Type.BOOLEAN) {
@@ -378,13 +376,13 @@ public class Interpreter {
         return null;
     }
 
-    private void visitVariableDeclaration(VariableDeclaration decl) {
+    public void visitVariableDeclaration(VariableDeclaration decl) {
         for(Assign assignment : decl.assignments) {
             visit(assignment);
         }
     }
 
-    private MemoryValue visitIfCondition(IfCondition cond) {
+    public MemoryValue visitIfCondition(IfCondition cond) {
         AST condition = cond.condition;
         Compound statement = cond.statement;
     
@@ -408,12 +406,12 @@ public class Interpreter {
         return returnValue;
     }
 
-    private void visitPrint(Print print) {
+    public void visitPrint(Print print) {
         MemoryValue printableValue = visit(print.printable);
         System.out.println(printableValue);
     }
 
-    private Array visitArrayInit(ArrayInit arrayInit) {
+    public Array visitArrayInit(ArrayInit arrayInit) {
         List<MemoryValue> elements = new ArrayList<>();
 
         for(AST el : arrayInit.elements) {
@@ -424,7 +422,7 @@ public class Interpreter {
         return new Array(elements);
     }
 
-    private MemoryValue visitArrayAccess(ArrayAccess access) {
+    public MemoryValue visitArrayAccess(ArrayAccess access) {
         MemoryValue arr = visit(access.array);
 
         if(arr.type != Type.ARRAY) {
@@ -449,11 +447,11 @@ public class Interpreter {
         return array.elements.get(i);
     }
 
-    private void visitFunctionInit(FunctionInit functionInit) {
+    public void visitFunctionInit(FunctionInit functionInit) {
         memory.put(functionInit.functionName, new Function(functionInit));
     }
 
-    private MemoryValue visitFunctionCall(FunctionCall funcCall) {
+    public MemoryValue visitFunctionCall(FunctionCall funcCall) {
         MemoryValue func = visit(funcCall.function);
 
         if(func.type != Type.FUNCTION) {
@@ -499,11 +497,11 @@ public class Interpreter {
         return ret;
     }
 
-    private MemoryValue visitReturn(Return ret) {
+    public MemoryValue visitReturn(Return ret) {
         return visit(ret.returnable);
     }
 
-    private MemoryValue visitWhileLoop(WhileLoop whileLoop) {
+    public MemoryValue visitWhileLoop(WhileLoop whileLoop) {
         AST condition = whileLoop.condition;
         Compound statement = whileLoop.statement;
     
@@ -521,7 +519,7 @@ public class Interpreter {
         return returnValue;
     }
 
-    private Singular visitCastValue(CastValue cast) {
+    public Singular visitCastValue(CastValue cast) {
         MemoryValue memoryVal = visit(cast.value);
 
         if(memoryVal instanceof Singular) {
@@ -618,7 +616,7 @@ public class Interpreter {
         return null;
     }
 
-    private void visitImport(Import im) {
+    public void visitImport(Import im) {
         String name = im.name;
         String path = im.path;
     
@@ -631,7 +629,7 @@ public class Interpreter {
         memory.put(name, object);
     }
 
-    private MemoryValue visitObjectDive(ObjectDive dive) {
+    public MemoryValue visitObjectDive(ObjectDive dive) {
         MemoryValue parent = visit(dive.parent);
         if(parent instanceof LangObject) {
             LangObject object = (LangObject) parent;
