@@ -76,7 +76,7 @@ public class Parser {
                 Token op = currentToken;
                 eat(currentToken.type);
     
-                comparables.add(expr());
+                comparables.add(subAdd());
                 operators.add(op);
             }
             node = new Compare(comparables, operators);
@@ -106,7 +106,7 @@ public class Parser {
         ) {
             Token token = currentToken;
             eat(currentToken.type);
-            node = new BinaryOperator(node, token, factor());
+            node = new BinaryOperator(node, token, cast());
         }
     
         return node;
@@ -212,6 +212,77 @@ public class Parser {
         
     }
 
+    private List<AST> statementList() {
+        List<AST> nodes = new ArrayList<>();
+
+        AST node = statement();
+        nodes.add(node);
+
+        while(!(node instanceof NoOperator)) {
+            node = statement();
+            nodes.add(node);
+        }
+    
+        return nodes;
+    }
+
+    private AST statement() {
+        AST node;
+    
+        switch(currentToken.type) {
+            case VARIABLE_DECL:
+            {
+                eat(TokenType.VARIABLE_DECL);
+                node = variableDeclaration();
+                eat(TokenType.SEMICOLON);
+                break;
+            }
+            case IDENTIFIER:
+                node = identifierStatement();
+                eat(TokenType.SEMICOLON);
+                break;
+    
+            case IF:
+            {
+                IfCondition cond = ifStatement();
+                while(currentToken.typeOf(TokenType.ELSE)) {
+                    cond.elses.add(elseStatement());
+                }
+    
+                node = cond;
+                break;
+            }
+            
+            case WHILE:
+                node = whileLoopStatement();
+                break;
+    
+            case PRINT:
+                node = printStatement();
+                eat(TokenType.SEMICOLON);
+                break;
+    
+            case FUNCTION:
+                node = functionInitStatement();
+                break;
+    
+            case RETURN:
+                node = returnStatement();
+                eat(TokenType.SEMICOLON);
+                break;
+    
+            case IMPORT:
+                node = importStatement();
+                eat(TokenType.SEMICOLON);
+                break;
+    
+            default:
+                node = empty();
+        }
+    
+        return node;
+    }
+
     private Compound compoundStatement() {
         eat(TokenType.L_CURLY);
         List<AST> nodes = statementList();
@@ -220,20 +291,6 @@ public class Parser {
         Compound root = new Compound(insideFunction, nodes);
 
         return root;
-    }
-    
-    private List<AST> statementList() {
-        AST node = statement();
-    
-        List<AST> nodes = new ArrayList<>();
-        nodes.add(node);
-    
-        while(currentToken.typeOf(TokenType.SEMICOLON)) {
-            eat(currentToken.type);
-            nodes.add(statement());
-        } 
-    
-        return nodes;
     }
     
     private Variable variable() {
@@ -364,9 +421,7 @@ public class Parser {
     
     private Print printStatement() {
         eat(TokenType.PRINT);
-        eat(TokenType.L_PAREN);
         AST printable = expr();
-        eat(TokenType.R_PAREN);
     
         return new Print(printable);
     }
@@ -439,58 +494,6 @@ public class Parser {
         eat(TokenType.IDENTIFIER);
     
         return new Import(path, name);
-    }
-    
-    private AST statement() {
-        AST node;
-    
-        switch(currentToken.type) {
-            case VARIABLE_DECL:
-            {
-                eat(TokenType.VARIABLE_DECL);
-                node = variableDeclaration();
-                break;
-            }
-            case IDENTIFIER:
-                node = identifierStatement();
-                break;
-    
-            case IF:
-            {
-                IfCondition cond = ifStatement();
-                while(currentToken.typeOf(TokenType.ELSE)) {
-                    cond.elses.add(elseStatement());
-                }
-    
-                node = cond;
-                break;
-            }
-            
-            case WHILE:
-                node = whileLoopStatement();
-                break;
-    
-            case PRINT:
-                node = printStatement();
-                break;
-    
-            case FUNCTION:
-                node = functionInitStatement();
-                break;
-    
-            case RETURN:
-                node = returnStatement();
-                break;
-    
-            case IMPORT:
-                node = importStatement();
-                break;
-    
-            default:
-                node = empty();
-        }
-    
-        return node;
     }
     
     private ArrayAccess arrayAccess(AST array) {

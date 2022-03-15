@@ -49,6 +49,7 @@ public class Lexer {
         put("as", TokenType.AS);
         put("and", TokenType.AND);
         put("or", TokenType.OR);
+        put("is", TokenType.EQUALS);
         put("none", TokenType.NONE);
         put("int", TokenType.CAST_INT);
         put("str", TokenType.CAST_STRING);
@@ -83,7 +84,7 @@ public class Lexer {
         line = 1;
         column = 1;
 
-        currentChar = code.charAt(position);
+        currentChar = code.length() > 0 ? code.charAt(position) : '\0';
     }
 
     private Token createToken(TokenType type, String value) {

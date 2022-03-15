@@ -6,7 +6,6 @@ import java.util.List;
 import java.io.File;
 
 import skorupinski.montana.interpreter.MemoryValue.*;
-import skorupinski.montana.interpreter.MemoryValue.Type;
 import skorupinski.montana.lexer.Lexer;
 import skorupinski.montana.lexer.Token;
 import skorupinski.montana.lexer.TokenType;
@@ -195,36 +194,36 @@ public class Interpreter {
             Singular rightMemoryValue = (Singular) visit(right);
     
             String leftValue = leftMemoryValue.value;
-            String rigthValue = rightMemoryValue.value;
-    
+            String rightValue = rightMemoryValue.value;
+ 
             if(op.typeOf(TokenType.EQUALS)) {
                 if(leftMemoryValue.type == Type.FLOAT && rightMemoryValue.type == Type.FLOAT) {
                     double leftVal = Double.parseDouble(leftValue);
-                    double rightVal = Double.parseDouble(rigthValue);
+                    double rightVal = Double.parseDouble(rightValue);
     
                     if(leftVal != rightVal) {
                         return new Singular(Values.FALSE, Type.BOOLEAN);
                     }
-                } else if(leftValue != rigthValue) {
+                } else if(!leftValue.equals(rightValue)) {
                     return new Singular(Values.FALSE, Type.BOOLEAN);
                 }
             } else if(op.typeOf(TokenType.NOT_EQUALS)) {
                 if(leftMemoryValue.type == Type.FLOAT && rightMemoryValue.type == Type.FLOAT) {
                     double leftVal = Double.parseDouble(leftValue);
-                    double rightVal = Double.parseDouble(rigthValue);
+                    double rightVal = Double.parseDouble(rightValue);
     
                     if(leftVal == rightVal) {
                         return new Singular(Values.FALSE, Type.BOOLEAN);
                     }
-                } else if(leftValue == rigthValue) {
+                } else if(leftValue.equals(rightValue)) {
                     return new Singular(Values.FALSE, Type.BOOLEAN);
                 }
             } else if(op.typeOf(TokenType.MORE_OR_EQ)) {
                 if(leftMemoryValue.type == Type.FLOAT && rightMemoryValue.type == Type.FLOAT) {
                     double leftVal = Double.parseDouble(leftValue);
-                    double rightVal = Double.parseDouble(rigthValue);
+                    double rightVal = Double.parseDouble(rightValue);
     
-                    if(leftVal< rightVal) {
+                    if(leftVal < rightVal) {
                         return new Singular(Values.FALSE, Type.BOOLEAN);
                     }
                 } else {
@@ -233,9 +232,9 @@ public class Interpreter {
             } else if(op.typeOf(TokenType.LESS_OR_EQ)) {
                 if(leftMemoryValue.type == Type.FLOAT && rightMemoryValue.type == Type.FLOAT) {
                     double leftVal = Double.parseDouble(leftValue);
-                    double rightVal = Double.parseDouble(rigthValue);
+                    double rightVal = Double.parseDouble(rightValue);
     
-                    if(leftVal> rightVal) {
+                    if(leftVal > rightVal) {
                         return new Singular(Values.FALSE, Type.BOOLEAN);
                     }
                 } else {
@@ -244,9 +243,9 @@ public class Interpreter {
             } else if(op.typeOf(TokenType.LESS)) {
                 if(leftMemoryValue.type == Type.FLOAT && rightMemoryValue.type == Type.FLOAT) {
                     double leftVal = Double.parseDouble(leftValue);
-                    double rightVal = Double.parseDouble(rigthValue);
+                    double rightVal = Double.parseDouble(rightValue);
     
-                    if(leftVal>= rightVal) {
+                    if(leftVal >= rightVal) {
                         return new Singular(Values.FALSE, Type.BOOLEAN);
                     }
                 } else {
@@ -255,9 +254,9 @@ public class Interpreter {
             } else if(op.typeOf(TokenType.MORE)) {
                 if(leftMemoryValue.type == Type.FLOAT && rightMemoryValue.type == Type.FLOAT) {
                     double leftVal= Double.parseDouble(leftValue);
-                    double rightVal = Double.parseDouble(rigthValue);
+                    double rightVal = Double.parseDouble(rightValue);
     
-                    if(leftVal<= rightVal) {
+                    if(leftVal <= rightVal) {
                         return new Singular(Values.FALSE, Type.BOOLEAN);
                     }
                 } else {
@@ -343,14 +342,14 @@ public class Interpreter {
         String rightValue = ((Singular) visit(cond.right)).value;
     
         if(cond.token.typeOf(TokenType.AND)) {
-            if(leftValue == Values.TRUE && rightValue == Values.TRUE) {
+            if(leftValue.equals(Values.TRUE) && rightValue.equals(Values.TRUE)) {
                 return new Singular(Values.TRUE, Type.BOOLEAN);
             } else {
                 return new Singular(Values.FALSE, Type.BOOLEAN);
             }
     
         } else if(cond.token.typeOf(TokenType.OR)) {
-            if(leftValue == Values.TRUE || rightValue == Values.TRUE) {
+            if(leftValue.equals(Values.TRUE) || rightValue.equals(Values.TRUE)) {
                 return new Singular(Values.TRUE, Type.BOOLEAN);
             } else {
                 return new Singular(Values.FALSE, Type.BOOLEAN);
@@ -526,7 +525,6 @@ public class Interpreter {
             Singular memoryValue = (Singular) memoryVal;
 
             String value = memoryValue.value;
-            Type type = memoryValue.type;
     
             switch(cast.type.type) {
                 case CAST_FLOAT:
@@ -658,6 +656,7 @@ public class Interpreter {
         Parser parser = new Parser(lexer);
     
         AST tree = parser.parse();
+        System.out.println(tree);
         analyzer.visit(tree);
         return visit(tree);
     }
