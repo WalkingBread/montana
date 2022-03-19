@@ -437,7 +437,7 @@ public class Interpreter {
         }
     
         Singular _index = (Singular) index;
-        int i = Integer.parseInt(_index.value);
+        int i = (int) Double.parseDouble(_index.value);
     
         if(i > array.elements.size() - 1) {
             new SyntaxError(access.index.token, "Index out of bounds.").cast();
@@ -513,6 +513,37 @@ public class Interpreter {
             returnValue = visit(statement);
     
             condValue = ((Singular) visit(condition)).value;
+        } 
+    
+        return returnValue;
+    }
+
+    public MemoryValue visitForLoop(ForLoop forLoop) {
+        enterNewMemory();
+
+        AST init = forLoop.init;
+        visit(init);
+
+        Memory backup = null;
+
+        Assign assign = forLoop.assign;
+
+        Compound statement = forLoop.statement;
+
+        AST condition = forLoop.condition;
+    
+        String condValue = ((Singular) visit(condition)).value;
+    
+        MemoryValue returnValue = null;
+    
+        while(condValue == Values.TRUE) {
+            backup = memory;
+
+            returnValue = visit(statement);
+            condValue = ((Singular) visit(condition)).value;
+
+            memory = backup;
+            visit(assign);
         } 
     
         return returnValue;
@@ -621,21 +652,34 @@ public class Interpreter {
         if(im.token.typeOf(TokenType.BUILT_IN_LIB)) {
             
         } 
+
+        String newPath = path;
+
+        if(!new File(path).isAbsolute()) {
+            newPath = directory;
+            if(!(newPath.endsWith("\\") || newPath.endsWith("/"))) {
+                newPath += '/';
+            }
+            newPath += path;
+        }
     
-        LangObject object = (LangObject) new Interpreter().evaluate(directory + path);
+        LangObject object = (LangObject) new Interpreter().evaluate(newPath);
+
+        System.out.println(object.objectMemory);
     
         memory.put(name, object);
     }
 
     public MemoryValue visitObjectDive(ObjectDive dive) {
         MemoryValue parent = visit(dive.parent);
+
         if(parent instanceof LangObject) {
             LangObject object = (LangObject) parent;
             Memory enclosingMemory = memory;
             memory = object.objectMemory;
     
             MemoryValue value = visit(dive.child);
-    
+
             memory = enclosingMemory;
             return value;
         }
@@ -646,7 +690,7 @@ public class Interpreter {
     }
 
     private String getDirectoryFromPath(String path) {
-        return new File(path).getParentFile().getName();
+        return new File(path).getParentFile().getAbsolutePath();
     }
     
     public MemoryValue evaluate(String path) {

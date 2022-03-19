@@ -151,9 +151,15 @@ public abstract class AST {
         
         public final List<Assign> assignments;
 
-        protected VariableDeclaration(List<Variable> variables) {
+        public VariableDeclaration(List<Variable> variables) {
             super(null);
             this.variables = variables;
+            assignments = new ArrayList<>();
+        }
+
+        public VariableDeclaration() {
+            super(null);
+            this.variables = new ArrayList<>();
             assignments = new ArrayList<>();
         }
 
@@ -408,6 +414,31 @@ public abstract class AST {
 
     }
 
+    public static class ForLoop extends AST {
+
+        public final AST init;
+
+        public final AST condition;
+
+        public final Assign assign;
+
+        public final Compound statement;
+
+        protected ForLoop(AST init, AST condition, Assign assign, Compound statement) {
+            super(null);
+            this.init = init;
+            this.condition = condition;
+            this.assign = assign;
+            this.statement = statement;
+        }
+
+        @Override
+        protected String tree(int level) {
+            return branch(level) + init.tree(level + 1) + condition.tree(level + 1) + assign.tree(level + 1) + statement.tree(level + 1);
+        }
+        
+    }
+
     public static class ClassInit extends AST {
 
         public final String name;
@@ -467,9 +498,9 @@ public abstract class AST {
 
         public final AST parent;
 
-        public final Variable child;
+        public final AST child;
 
-        public ObjectDive(AST parent, Token colon, Variable child) {
+        public ObjectDive(AST parent, Token colon, AST child) {
             super(colon);
             this.parent = parent;
             this.child = child;

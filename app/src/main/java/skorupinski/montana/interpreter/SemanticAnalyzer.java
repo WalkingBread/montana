@@ -133,8 +133,8 @@ public class SemanticAnalyzer {
     }
     
     public void visitFunctionInit(FunctionInit functionInit) {
-        Symbol func_symbol = new Symbol(functionInit.functionName);
-        currentScope.define(func_symbol);
+        Symbol functionSymbol = new Symbol(functionInit.functionName);
+        currentScope.define(functionSymbol);
     
         enterNewScope();
     
@@ -162,6 +162,16 @@ public class SemanticAnalyzer {
         visit(whileLoop.statement);
         leaveScope();
     }
+
+    public void visitForLoop(ForLoop forLoop) {
+        visit(forLoop.init);
+        visit(forLoop.condition);
+        visit(forLoop.assign);
+
+        enterNewScope();
+        visit(forLoop.statement);
+        leaveScope();
+    }
     
     public void visitCastValue(CastValue cast) {
         visit(cast.value);
@@ -174,6 +184,6 @@ public class SemanticAnalyzer {
     
     public void visitObjectDive(ObjectDive dive) {
         visit(dive.parent);
-        visit(dive.child);
+        //visit(dive.child);
     }
 }

@@ -197,19 +197,23 @@ public class Parser {
             }
             
             default:
-                AST node = variable();
-                if(currentToken.typeOf(TokenType.L_SQUARED)) {
-                    node = arrayAccess(node);
-    
-                } else if(currentToken.typeOf(TokenType.L_PAREN)) {
-                    node = functionCall(node);
-    
-                } else if(currentToken.typeOf(TokenType.COLON)) {
-                    node = objectDive(node);
-                }
-                return node;
+                return specialOperations();
         }
         
+    }
+
+    private AST specialOperations() {
+        AST node = variable();
+        if(currentToken.typeOf(TokenType.L_SQUARED)) {
+            node = arrayAccess(node);
+
+        } else if(currentToken.typeOf(TokenType.L_PAREN)) {
+            node = functionCall(node);
+
+        } else if(currentToken.typeOf(TokenType.COLON)) {
+            node = objectDive(node);
+        }
+        return node;
     }
 
     private List<AST> statementList() {
@@ -255,6 +259,10 @@ public class Parser {
             
             case WHILE:
                 node = whileLoopStatement();
+                break;
+
+            case FOR:
+                node = forLoopStatement();
                 break;
     
             case PRINT:
@@ -353,7 +361,7 @@ public class Parser {
     private ObjectDive objectDive(AST parent) {
         Token colon = currentToken;
         eat(TokenType.COLON);
-        Variable child = variable();
+        AST child = specialOperations();
     
         ObjectDive dive = new ObjectDive(parent, colon, child);
     
@@ -408,6 +416,14 @@ public class Parser {
         }
         return null;
     }
+
+    private Assign assignStatement() {
+        AST left = variable();
+        Token token = currentToken;
+        eat(TokenType.ASSIGN);
+        AST right = expr();
+        return new Assign(left, token, right);
+    }
     
     private WhileLoop whileLoopStatement() {
         eat(TokenType.WHILE);
@@ -418,6 +434,36 @@ public class Parser {
         Compound statement = compoundStatement();
         return new WhileLoop(condition, statement);
     };
+
+    private ForLoop forLoopStatement() {
+        eat(TokenType.FOR);
+        eat(TokenType.L_PAREN);
+
+        AST init = null;
+
+        System.out.println(currentToken);
+
+        if(currentToken.typeOf(TokenType.VARIABLE_DECL)) {
+            eat(TokenType.VARIABLE_DECL);
+            init = variableDeclaration();
+
+        } else {
+            init = assignStatement();
+        }
+
+        eat(TokenType.SEMICOLON);
+
+        AST condition = expr();
+        eat(TokenType.SEMICOLON);
+
+        Assign assign = assignStatement();
+
+        eat(TokenType.R_PAREN);
+
+        Compound statement = compoundStatement();
+
+        return new ForLoop(init, condition, assign, statement);
+    }
     
     private Print printStatement() {
         eat(TokenType.PRINT);
@@ -432,7 +478,7 @@ public class Parser {
         eat(TokenType.IDENTIFIER);
         eat(TokenType.L_PAREN);
     
-        VariableDeclaration params = null;
+        VariableDeclaration params = new VariableDeclaration();
     
         if(currentToken.typeOf(TokenType.IDENTIFIER)) {
             params = standardVariableDeclaration();
