@@ -197,12 +197,12 @@ public class Parser {
             }
             
             default:
-                return specialOperations();
+                return identifierOperations();
         }
         
     }
 
-    private AST specialOperations() {
+    private AST identifierOperations() {
         AST node = variable();
         if(currentToken.typeOf(TokenType.L_SQUARED)) {
             node = arrayAccess(node);
@@ -212,8 +212,28 @@ public class Parser {
 
         } else if(currentToken.typeOf(TokenType.COLON)) {
             node = objectDive(node);
-        }
+
+        } else if(currentToken.typeOf(TokenType.INCREMENT) || currentToken.typeOf(TokenType.DECREMENT)) {
+            node = incrementDecrement((Variable) node, currentToken);
+        } 
         return node;
+    }
+
+    private Assign incrementDecrement(Variable variable, Token token) {
+        eat(token.type);
+
+        Value right = new Value(new Token(TokenType.FLOAT, "1"));
+
+        if(token.typeOf(TokenType.INCREMENT)) {
+            BinaryOperator op = new BinaryOperator(variable, new Token(TokenType.PLUS, "+"), right);
+            return new Assign(variable, token, op);
+
+        } else if(token.typeOf(TokenType.DECREMENT)) {
+            BinaryOperator op = new BinaryOperator(variable, new Token(TokenType.MINUS, "-"), right);
+            return new Assign(variable, token, op);
+        }
+
+        return null;
     }
 
     private List<AST> statementList() {
@@ -361,7 +381,7 @@ public class Parser {
     private ObjectDive objectDive(AST parent) {
         Token colon = currentToken;
         eat(TokenType.COLON);
-        AST child = specialOperations();
+        AST child = identifierOperations();
     
         ObjectDive dive = new ObjectDive(parent, colon, child);
     
@@ -373,25 +393,17 @@ public class Parser {
     }
     
     private AST identifierStatement() {
-        AST left = variable();
-        Token token = currentToken;
-    
-        if(token.typeOf(TokenType.L_PAREN)) {
-            return functionCall(left);
+        AST identifier = identifierOperations();
+        if(identifier instanceof Variable) {
+            Token token = currentToken;
+
+            eat(TokenType.ASSIGN);
+            AST right = expr();
+        
+            return new Assign(identifier, token, right);
         }
-    
-        if(token.typeOf(TokenType.L_SQUARED)) {
-            left = arrayAccess(left);
-        }
-    
-        if(token.typeOf(TokenType.COLON)) {
-            return objectDive(left);
-        }
-    
-        eat(TokenType.ASSIGN);
-        AST right = expr();
-    
-        return new Assign(left, token, right);
+
+        return identifier;
     }
     
     private IfCondition ifStatement() {
@@ -456,7 +468,18 @@ public class Parser {
         AST condition = expr();
         eat(TokenType.SEMICOLON);
 
-        Assign assign = assignStatement();
+        Assign assign = null;
+
+        Variable var = variable();
+
+        if(currentToken.typeOf(TokenType.INCREMENT) || currentToken.typeOf(TokenType.DECREMENT)) {
+            assign = incrementDecrement(var, currentToken);
+        } else {
+            Token token = currentToken;
+            eat(TokenType.ASSIGN);
+            AST right = expr();
+            assign = new Assign(var, token, right);
+        }
 
         eat(TokenType.R_PAREN);
 

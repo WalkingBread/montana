@@ -48,5 +48,11 @@ public enum TokenType {
     AS, 
     IMPORT,
     BUILT_IN_LIB,
-    POWER
+    POWER,
+    INCREMENT,
+    DECREMENT,
+    PLUS_EQ,
+    MINUS_EQ,
+    MULT_EQ,
+    DIV_EQ
 }

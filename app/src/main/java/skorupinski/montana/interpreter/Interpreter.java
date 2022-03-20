@@ -527,9 +527,7 @@ public class Interpreter {
         Memory backup = null;
 
         Assign assign = forLoop.assign;
-
         Compound statement = forLoop.statement;
-
         AST condition = forLoop.condition;
     
         String condValue = ((Singular) visit(condition)).value;
@@ -540,10 +538,10 @@ public class Interpreter {
             backup = memory;
 
             returnValue = visit(statement);
-            condValue = ((Singular) visit(condition)).value;
 
             memory = backup;
             visit(assign);
+            condValue = ((Singular) visit(condition)).value;
         } 
     
         return returnValue;

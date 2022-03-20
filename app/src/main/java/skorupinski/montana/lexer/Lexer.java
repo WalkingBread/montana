@@ -35,6 +35,8 @@ public class Lexer {
         put("}", TokenType.R_CURLY);
         put("[", TokenType.L_SQUARED);
         put("]", TokenType.R_SQUARED);
+        put("++", TokenType.INCREMENT);
+        put("--", TokenType.DECREMENT);
 
         put("true", TokenType.BOOLEAN);
         put("false", TokenType.BOOLEAN);
