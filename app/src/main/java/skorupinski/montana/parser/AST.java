@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import skorupinski.montana.lexer.Token;
+import skorupinski.montana.lib.ExternalMethod;
 
 public abstract class AST {
 
@@ -112,7 +113,7 @@ public abstract class AST {
 
         public final Token variable;
 
-        protected Variable(Token variable) {
+        public Variable(Token variable) {
             super(variable);
             this.variable = variable;
         }
@@ -343,16 +344,27 @@ public abstract class AST {
 
         public final Compound block;
 
-        protected FunctionInit(String functionName, VariableDeclaration params, Compound block) {
+        public final ExternalMethod method;
+
+        public FunctionInit(String functionName, VariableDeclaration params, Compound block) {
             super(null);
             this.functionName = functionName;
             this.params = params;
             this.block = block;
+            this.method = null;
+        }
+
+        public FunctionInit(String functionName, VariableDeclaration params, ExternalMethod method) {
+            super(null);
+            this.functionName = functionName;
+            this.params = params;
+            this.block = null;
+            this.method = method;
         }
         
         @Override
         protected String tree(int level) {
-            return branch(level) + params.tree(level + 1) + block.tree(level + 1);
+            return branch(level) + params.tree(level + 1) + (block == null ? "Outer method" : block.tree(level + 1));
         }
     }
 

@@ -9,6 +9,7 @@ import skorupinski.montana.interpreter.MemoryValue.*;
 import skorupinski.montana.lexer.Lexer;
 import skorupinski.montana.lexer.Token;
 import skorupinski.montana.lexer.TokenType;
+import skorupinski.montana.lib.ModuleManager;
 import skorupinski.montana.parser.AST;
 import skorupinski.montana.parser.Parser;
 import skorupinski.montana.parser.AST.*;
@@ -21,11 +22,14 @@ public class Interpreter {
 
     private final SemanticAnalyzer analyzer;
 
+    private final ModuleManager moduleManager;
+
     private String directory;
     
     public Interpreter() {
         memory = new Memory(0, null);
         analyzer = new SemanticAnalyzer();
+        moduleManager = new ModuleManager();
     }
 
     private void typeMismatchError(Token token) {
@@ -484,8 +488,19 @@ public class Interpreter {
             }
         }
     
-    
-        MemoryValue ret = visit(function.function.block);
+        MemoryValue ret = null;
+
+        if(function.function.block != null) {
+            ret = visit(function.function.block);
+        } else {
+            MemoryValue[] real = new MemoryValue[funcCall.params.size()];
+            for(int i = 0; i < funcCall.params.size(); i++) {
+                real[i] = visit(funcCall.params.get(i));
+            }
+
+            ret = function.function.method.call(real);
+        }
+
     
         leaveMemory();
     
@@ -648,24 +663,23 @@ public class Interpreter {
         String path = im.path;
     
         if(im.token.typeOf(TokenType.BUILT_IN_LIB)) {
+            moduleManager.importModule(path, memory, name);
             
-        } 
+        } else {
+            String newPath = path;
 
-        String newPath = path;
-
-        if(!new File(path).isAbsolute()) {
-            newPath = directory;
-            if(!(newPath.endsWith("\\") || newPath.endsWith("/"))) {
-                newPath += '/';
+            if(!new File(path).isAbsolute()) {
+                newPath = directory;
+                if(!(newPath.endsWith("\\") || newPath.endsWith("/"))) {
+                    newPath += '/';
+                }
+                newPath += path;
             }
-            newPath += path;
+        
+            LangObject object = (LangObject) new Interpreter().evaluate(newPath);
+        
+            memory.put(name, object);
         }
-    
-        LangObject object = (LangObject) new Interpreter().evaluate(newPath);
-
-        System.out.println(object.objectMemory);
-    
-        memory.put(name, object);
     }
 
     public MemoryValue visitObjectDive(ObjectDive dive) {
